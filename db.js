@@ -60,9 +60,29 @@ app.post('/api/create-users', async (req, res) => {
     res.json(savedItem);
     console.log("Add item success")
   } catch (error) {
-    res.status(500).json({ error: 'Có lỗi xảy ra khi lưu tài liệu.' });
+   
   }
 });
+
+app.post('/api/login', async (req, res) =>{
+  const { email, password } = req.body;
+  console.log(email, password)
+    try {
+      const user = await User.findOne({ email });
+      if (!user) {
+        res.status(500).json("Không tìm thấy người dùng");
+      }
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        res.status(500).json("Mật khẩu không đúng");
+      }
+      res.json("thành công");
+    } catch (e) {
+      //  console.log(error);
+    }
+})
+
+
 
 // App
 // const Schema = mongoose.Schema;
@@ -187,14 +207,16 @@ const itemUser = new mongoose.Schema({
   id: Schema.Types.ObjectId,
   name: String,
   description: String,
+  sample1: String,
+  sample2: String,
   label: String,
   inside: Schema.Types.ObjectId,
 });
 const Item = mongoose.model('Items', itemUser);
 
 app.post('/api/create-item', async (req, res) => {
-  const { name, description, label, inside } = req.body;
-  const newItem = new Item({ name, description, label, inside });
+  const { name, description, sample1, sample2, label, inside } = req.body;
+  const newItem = new Item({ name, description, sample1, sample2, label, inside });
 
   try {
     const savedItem = await newItem.save();
