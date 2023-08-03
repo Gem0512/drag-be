@@ -26,6 +26,38 @@ app.use(cors());
     console.error('Lỗi kết nối MongoDB:', error);
   }
 })();
+//Email
+const emailUser =new mongoose.Schema({
+  email: String,
+})
+
+const Email = mongoose.model('Emails', emailUser);
+app.use(bodyParser.json());
+app.use(cors());
+app.post('/api/create-email', async (req, res) => {
+  const { email } = req.body;
+  console.log(email)
+ 
+  const newItem = new Email({ email: email});
+  try {
+    const savedItem = await newItem.save();
+    res.json(savedItem);
+    console.log("Add item success")
+  } catch (error) {
+   
+  }
+});
+
+app.get('/api/email-last', async (req, res) => {
+  try {
+    const lastEmail = await Email.findOne().sort({ _id: -1 }); 
+    res.json(lastEmail);
+  } catch (error) {
+    console.error('Lỗi khi lấy thông tin người dùng cuối cùng:', error);
+    res.status(500).json({ error: 'Đã có lỗi xảy ra khi lấy dữ liệu.' });
+  }
+});
+
 
 // User
 
@@ -88,12 +120,13 @@ app.post('/api/login', async (req, res) =>{
 // const Schema = mongoose.Schema;
 
 const boxSchema = new Schema({
-  // _id: {
-  //   type: mongoose.Schema.Types.ObjectId, // Sử dụng mongoose.Schema.Types.ObjectId
-  //   required: true,
-  // },
+ 
   name: String,
   options: [String],
+  input: String,
+  text: String,
+  label: String,
+  checkBox: String,
   items:[String],
   author: String,
 });
@@ -172,24 +205,69 @@ app.post('/api/saveData', (req, res) => {
 });
 
 
+
+
+app.post('/api/saveTitle', async (req, res) => {
+  const { itemId, input, text, label, checkBox } = req.body;
+  console.log(itemId)
+  try{
+    // const app = await BoxModel.findOne({ itemId });
+
+    console.log(">>>>",input, text, label, checkBox, itemId );
+    // app.push(`${input} = {input}`)
+    const itemObjectId = new ObjectId(itemId);
+
+    BoxModel.findOneAndUpdate(
+      { _id: itemObjectId },
+      { $set: {
+         input:input,
+         text: text,
+         label: label,
+         checkBox: checkBox,
+        },
+       },
+      // { $push: { text: { $each: text } } },
+      // { $push: { label: { $each: label } } },
+      // { $push: { checkBox: { $each: checkBox } } },
+      { new: true }
+    )
+      .then(modal => {
+        console.log('User data updated:', modal);
+        res.status(200).json({ message: 'Modal data updated successfully' });
+      })
+  }
+  
+    catch(err) {
+      console.error(err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
+
 app.post('/api/saveItemDrop', (req, res) => {
   const { itemId, items } = req.body;
   console.log(itemId, "/", items);
   const itemObjectId = new ObjectId(itemId);
 
+  // BoxModel.findOneAndUpdate(
+  //   { _id: itemObjectId },
+  //   { $set: { items: [] } }, // Đặt items thành một mảng rỗng trước khi thêm dữ liệu mới
+  //   { new: true }
+  // )
+  //   .then(() => {
+  //     // Tiếp theo, thêm dữ liệu mới vào items
+  //     return BoxModel.findOneAndUpdate(
+  //       { _id: itemObjectId },
+  //       { $push: { items: { $each: items } } },
+  //       { new: true }
+  //     );
+  //   })
   BoxModel.findOneAndUpdate(
-    { _id: itemObjectId },
-    { $set: { items: [] } }, // Đặt items thành một mảng rỗng trước khi thêm dữ liệu mới
-    { new: true }
-  )
-    .then(() => {
-      // Tiếp theo, thêm dữ liệu mới vào items
-      return BoxModel.findOneAndUpdate(
         { _id: itemObjectId },
         { $push: { items: { $each: items } } },
         { new: true }
-      );
-    })
+      )
     .then(modal => {
       console.log('User data updated:', modal);
       res.status(200).json({ message: 'Modal data updated successfully' });
@@ -199,6 +277,25 @@ app.post('/api/saveItemDrop', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
     });
 });
+
+app.get('/api/getItemById/:id', async (req,res)=>{
+  const itemId = req.params.id;
+  console.log(itemId)
+  try{
+    const objectId = new ObjectId(itemId);
+    // const user = await User.findOne({ email });
+    const item = await BoxModel.findOne({ _id: objectId });
+    if (!item) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+
+    return res.json(item);
+  }
+  catch (error){
+    console.error('Error retrieving item by id:', error);
+  }
+
+})
 
 
 // Items
