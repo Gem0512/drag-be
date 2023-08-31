@@ -10,7 +10,7 @@ services:
   depends_on:
    - mongo
   environment:
-   MONGODB_URL: "mongodb://mongo/db-drag-drop"
+   MONGODB_URL: "mongodb://mongo/db-drag-nestJs"
 
  mongo:
   container_name: mongo
@@ -20,6 +20,7 @@ services:
   volumes:
    - mongodb:/data/db
    - mongodb_config:/data/configdb
+
 volumes:
  mongodb:
  mongodb_config:
